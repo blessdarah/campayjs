@@ -1,0 +1,26 @@
+{
+  "name": "campayjs",
+  "version": "1.0.0",
+  "description": "js/ts wrapper for campay api",
+  "keywords": [
+    "mobile",
+    "money",
+    "mtn",
+    "orange"
+  ],
+  "homepage": "https://github.com/blessdarah/campayjs#readme",
+  "bugs": {
+    "url": "https://github.com/blessdarah/campayjs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blessdarah/campayjs.git"
+  },
+  "license": "MIT",
+  "author": "Bless Darah",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test"
+  }
+}
