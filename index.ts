@@ -1,5 +1,5 @@
 type Config = {
-  appUsername: string;
+  appKey: string;
   appSecret: string;
   baseUrl?: string;
 };
@@ -18,6 +18,7 @@ type WithdrawData = {
   currency: string;
   to: string;
   description: string;
+  external_reference?: string;
 };
 
 type TBalanceResponse = {
@@ -54,7 +55,7 @@ export default class Campay {
 
   constructor(config: Config) {
     this.config = {
-      appUsername: config.appUsername,
+      appKey: config.appKey,
       appSecret: config.appSecret,
       baseUrl: config.baseUrl || this.demoUrl,
     };
@@ -80,7 +81,7 @@ export default class Campay {
       headers: this.headers,
       redirect: "follow",
       body: JSON.stringify({
-        username: this.config.appUsername,
+        username: this.config.appKey,
         password: this.config.appSecret,
       }),
     });
