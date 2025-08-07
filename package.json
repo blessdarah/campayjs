@@ -1,6 +1,6 @@
 {
   "name": "campayjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "js/ts wrapper for campay api",
   "keywords": [
     "mobile",
