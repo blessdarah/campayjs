@@ -47,20 +47,18 @@ type THistoryResponse = {
 };
 
 export default class Campay {
+  private static readonly DEFAULT_BASE_URL = "https://demo.campay.net/api";
+
   private config: Config;
-  private headers = new Headers();
   private token: string;
-  private demoUrl = "https://demo.campay.net/api";
-  // private demoUrl = "https://campay.net/api";
+  private tokenExpiresAt: number; // timestamp in milliseconds
 
   constructor(config: Config) {
     this.config = {
       appKey: config.appKey,
       appSecret: config.appSecret,
-      baseUrl: config.baseUrl || this.demoUrl,
+      baseUrl: config.baseUrl || Campay.DEFAULT_BASE_URL,
     };
-    this.headers.append("accept", "application/json");
-    this.headers.append("Content-Type", "application/json");
   }
 
   buildUrl(path: string) {
@@ -68,29 +66,61 @@ export default class Campay {
   }
 
   /*
-   * Get token
+   * Get token - check expiration before using cached tokens
+   */
+  private async getToken(): Promise<string> {
+    const now = Date.now();
+
+    // Check if token exists and is still valid (with 5-minute buffer)
+    if (
+      this.token &&
+      this.tokenExpiresAt &&
+      now < this.tokenExpiresAt - 300000
+    ) {
+      return this.token;
+    }
+
+    // Refresh token
+    return this.refreshToken();
+  }
+
+  /*
+   * Refresh token
    * If token is already set, return it
    * Otherwise, get token from server
    */
-  private async getToken(): Promise<string> {
-    if (this.token) {
-      return this.token;
-    }
+  private async refreshToken(): Promise<string> {
     const res = await fetch(this.buildUrl("token/"), {
       method: "POST",
-      headers: this.headers,
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+      },
       redirect: "follow",
       body: JSON.stringify({
         username: this.config.appKey,
         password: this.config.appSecret,
       }),
     });
+
     const tokenData = (await res.json()) as {
       token: string;
       expires_in: number;
     };
+
     this.token = tokenData.token;
+    this.tokenExpiresAt = Date.now() + tokenData.expires_in * 1000;
+
     return this.token;
+  }
+
+  private async getHeaders() {
+    const token = await this.getToken();
+    return {
+      accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Token ${token}`,
+    };
   }
 
   /*
@@ -103,13 +133,10 @@ export default class Campay {
   }> {
     const response = await fetch(this.buildUrl("collect/"), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${await this.getToken()}`,
-      },
+      headers: await this.getHeaders(),
       body: JSON.stringify(data),
     });
-    return response.json();
+    return await response.json();
   }
 
   /*
@@ -131,12 +158,9 @@ export default class Campay {
   }> {
     const response = await fetch(this.buildUrl(`transaction/${reference}/`), {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${await this.getToken()}`,
-      },
+      headers: await this.getHeaders(),
     });
-    return response.json();
+    return await response.json();
   }
 
   /*
@@ -145,10 +169,7 @@ export default class Campay {
   async withdraw(data: WithdrawData) {
     const response = await fetch(this.buildUrl("withdraw/"), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${await this.getToken()}`,
-      },
+      headers: await this.getHeaders(),
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -160,10 +181,7 @@ export default class Campay {
   async getAppBalance(): Promise<TBalanceResponse> {
     const response = await fetch(this.buildUrl("balance/"), {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${await this.getToken()}`,
-      },
+      headers: await this.getHeaders(),
     });
     return await response.json();
   }
@@ -177,10 +195,7 @@ export default class Campay {
   ): Promise<THistoryResponse[]> {
     const response = await fetch(this.buildUrl("history/"), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${await this.getToken()}`,
-      },
+      headers: await this.getHeaders(),
       body: JSON.stringify({
         start_date: startDate,
         end_date: endDate,
@@ -197,11 +212,8 @@ export default class Campay {
   async getPaymentLink(data: CollectionData): Promise<any> {
     const response = await fetch(this.buildUrl("get_payment_link/"), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Token ${await this.getToken()}`,
-        body: JSON.stringify(data),
-      },
+      headers: await this.getHeaders(),
+      body: JSON.stringify(data),
     });
     return await response.json();
   }
