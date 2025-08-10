@@ -21,7 +21,7 @@
     "type": "module",
     "main": "index.js",
     "scripts": {
-        "build": "tsc index.ts --outDir . --declaration",
+        "build": "tsc index.ts --outDir . --declaration --target ES2022 --lib ES2022,DOM",
         "test": "npm run test"
     }
 }
