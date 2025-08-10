@@ -1,3 +1,9 @@
+/**
+ * JS/TS wrapper for Campay API
+ * @author Bless Darah
+ * @license MIT
+ */
+
 type Config = {
   appKey: string;
   appSecret: string;
@@ -209,7 +215,17 @@ export default class Campay {
    * If payment link is already set, return it
    * Otherwise, get payment link from server
    */
-  async getPaymentLink(data: CollectionData): Promise<any> {
+  async getPaymentLink(
+    data: CollectionData & {
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      redirect_url?: string;
+      failure_url?: string;
+      payment_options?: "MOMO" | "CARD";
+      paymer_can_pay_more?: "yes" | "no";
+    }
+  ): Promise<{ link: string }> {
     const response = await fetch(this.buildUrl("get_payment_link/"), {
       method: "POST",
       headers: await this.getHeaders(),
